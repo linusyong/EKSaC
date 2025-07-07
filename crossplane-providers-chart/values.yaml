@@ -10,7 +10,7 @@ provider:
         spec:
           replicas: 1
     version: v1
-    # version: v1.22.0
+    # version: v1.23.1
     providers:
     - name: provider-aws-ec2
       providerConfig:
@@ -26,10 +26,10 @@ provider:
           source: IRSA
   helm:
     version: v0
-    # version: v0.20.6
+    # version: v0.21.1
   kubernetes:
     version: v0
-    # version: v0.18.0
+    # version: v0.18.1
     providers:
     - name: provider-kubernetes
       providerConfig:
@@ -39,6 +39,6 @@ function:
   kcl:
     version: v0.11.4
   autoready:
-    version: v0.4.2
+    version: v0.5.0
   sequencer:
     version: v0.2.3
