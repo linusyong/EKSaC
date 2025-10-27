@@ -1,0 +1,50 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xvpcs.xnetwork.consumable.trustbank.sg
+spec:
+  group: xnetwork.consumable.trustbank.sg
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              region:
+                type: string
+                default: "ap-southeast-1"
+              vpcCidr:
+                type: string
+                default: "10.0.0.0/16"
+              availabilityZones:
+                type: array
+                items:
+                  type: string
+                default: ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
+              environment:
+                type: string
+              team:
+                type: string
+            required:
+            - environment
+            - team
+          status:
+            type: object
+            properties:
+              vpcId:
+                type: string
+              subnetIds:
+                type: array
+                items:
+                  type: string
+  names:
+    kind: XVPC
+    plural: xvpcs
+  claimNames:
+    kind: VPCClaim
+    plural: vpcclaims

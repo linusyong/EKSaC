@@ -1,0 +1,267 @@
+# composition.yaml
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: vpc-with-subnets
+  labels:
+    provider: aws
+    service: networking
+spec:
+  compositeTypeRef:
+    apiVersion: xnetwork.consumable.trustbank.sg
+    kind: XVPC
+  mode: Pipeline
+  pipeline:
+  - step: create-vpc-resources
+    functionRef:
+      name: function-kcl
+    input:
+      apiVersion: krm.kcl.dev/v1alpha1
+      kind: KCLInput
+      spec:
+        source: |
+          # Get observed composite resource
+          oxr = option("params").oxr
+          
+          # Extract spec values with defaults
+          spec = oxr.spec
+          region = spec.region or "ap-southeast-1"
+          vpcCidr = spec.vpcCidr or "10.0.0.0/16"
+          azs = spec.availabilityZones or ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
+          environment = spec.environment or "dev"
+          team = spec.team or "platform"
+          resourceName = oxr.metadata.name
+          
+          # Common tags
+          commonTags = {
+              Environment = environment
+              Team = team
+              ManagedBy = "crossplane"
+              CreatedBy = "kcl-composition"
+          }
+          
+          # VPC Resource
+          vpc = {
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "VPC"
+              metadata = {
+                  name = "${resourceName}-vpc"
+                  annotations = {
+                      "crossplane.io/external-name" = "${resourceName}-vpc"
+                  }
+                  labels = {
+                      "networks.example.com/network-id" = resourceName
+                  }
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      cidrBlock = vpcCidr
+                      enableDnsHostnames = True
+                      enableDnsSupport = True
+                      tags = {
+                          **commonTags
+                          Name = "${resourceName}-vpc"
+                          Type = "vpc"
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          }
+          
+          # Internet Gateway
+          igw = {
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "InternetGateway"
+              metadata = {
+                  name = "${resourceName}-igw"
+                  annotations = {
+                      "crossplane.io/external-name" = "${resourceName}-igw"
+                  }
+                  labels = {
+                      "networks.example.com/network-id" = resourceName
+                  }
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      tags = {
+                          **commonTags
+                          Name = "${resourceName}-igw"
+                          Type = "internet-gateway"
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          }
+          
+          # VPC Gateway Attachment
+          vpcGatewayAttachment = {
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "VPCGatewayAttachment"
+              metadata = {
+                  name = "${resourceName}-vpc-igw-attachment"
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      internetGatewayIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                      vpcIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          }
+          
+          # Route Table
+          routeTable = {
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "RouteTable"
+              metadata = {
+                  name = "${resourceName}-rt-public"
+                  labels = {
+                      "networks.example.com/network-id" = resourceName
+                  }
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      vpcIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                      tags = {
+                          **commonTags
+                          Name = "${resourceName}-rt-public"
+                          Type = "route-table"
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          }
+          
+          # Route to Internet Gateway
+          route = {
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "Route"
+              metadata = {
+                  name = "${resourceName}-route-public"
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      routeTableIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                      destinationCidrBlock = "0.0.0.0/0"
+                      gatewayIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          }
+          
+          # Generate subnets using list comprehension (KCL preferred way)
+          subnets = [{
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "Subnet"
+              metadata = {
+                  name = "${resourceName}-subnet-${i}"
+                  annotations = {
+                      "crossplane.io/external-name" = "${resourceName}-subnet-${i}"
+                  }
+                  labels = {
+                      "networks.example.com/network-id" = resourceName
+                      "networks.example.com/subnet-type" = "public"
+                  }
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      availabilityZone = azs[i]
+                      cidrBlock = "10.0.0.${i * 16}/28"
+                      mapPublicIpOnLaunch = True
+                      vpcIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                      tags = {
+                          **commonTags
+                          Name = "${resourceName}-subnet-${i}"
+                          Type = "subnet"
+                          SubnetType = "public"
+                          "kubernetes.io/role/elb" = "1"
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          } for i in range(len(azs))]
+          
+          # Generate route table associations using list comprehension
+          routeTableAssociations = [{
+              apiVersion = "ec2.aws.crossplane.io/v1beta1"
+              kind = "RouteTableAssociation"
+              metadata = {
+                  name = "${resourceName}-rta-subnet-${i}"
+              }
+              spec = {
+                  forProvider = {
+                      region = region
+                      routeTableIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                          }
+                      }
+                      subnetIdSelector = {
+                          matchLabels = {
+                              "networks.example.com/network-id" = resourceName
+                              "networks.example.com/subnet-type" = "public"
+                          }
+                          matchExpressions = [{
+                              key = "crossplane.io/external-name"
+                              operator = "In"
+                              values = ["${resourceName}-subnet-${i}"]
+                          }]
+                      }
+                  }
+                  managementPolicies = ["Create", "Update", "Delete"]
+                  providerConfigRef = {
+                      name = "default"
+                  }
+              }
+          } for i in range(len(azs))]
+
+          # Combine all resources into items array
+          items = [vpc, igw, vpcGatewayAttachment, routeTable, route] + subnets + routeTableAssociations

@@ -1,0 +1,15 @@
+apiVersion: xnetwork.consumable.trustbank.sg
+kind: XVPC
+metadata:
+  name: dev-vpc
+spec:
+  environment: "development"
+  team: "platform"
+  region: "ap-southeast-1"
+  vpcCidr: "10.0.0.0/22"
+  availabilityZones:
+    - "ap-southeast-1a"
+    - "ap-southeast-1b"
+    - "ap-southeast-1c"
+  compositionRef:
+    name: vpc-with-subnets

@@ -1,0 +1,16 @@
+apiVersion: xnetwork.consumable.trustbank.sg
+kind: VPCClaim
+metadata:
+  name: dev-vpc
+  namespace: default
+spec:
+  environment: "development"
+  team: "platform"
+  region: "us-east-1"
+  vpcCidr: "10.0.0.0/16"
+  availabilityZones:
+    - "us-east-1a"
+    - "us-east-1b"
+    - "us-east-1c"
+  compositionRef:
+    name: vpc-with-subnets

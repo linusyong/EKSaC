@@ -1,11 +1,11 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: x-ekscluster-kcl
+  name: x-ekscluster
 spec:
   compositeTypeRef:
     apiVersion: consumable.trustbank.sg/v1alpha1
-    kind: xEksClusterKcl
+    kind: xEksCluster
   mode: Pipeline
   pipeline:
   - step: create-helm-providerconfig
@@ -22,18 +22,21 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "helm.crossplane.io/v1beta1"
+            apiVersion = "helm.m.crossplane.io/v1beta1"
             kind = "ProviderConfig"
-            metadata.name = oxr.spec.name + "-providerconfig-helm"
-            metadata.annotations = {
-              "krm.kcl.dev/ready" = "True"
+            metadata = {
+              name = oxr.spec.name + "-providerconfig-helm"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                "krm.kcl.dev/ready" = "True"
+              }
             }
             spec = {
               credentials = {
                 secretRef = {
                   key = "kubeconfig"
                   name = oxr.spec.name + "-xplane-eks-cluster-auth"
-                  namespace = "eksac"
+                  namespace = oxr.metadata.namespace
                 }
                 source = "Secret"
               }
@@ -53,18 +56,21 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "kubernetes.crossplane.io/v1alpha1"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "ProviderConfig"
-            metadata.name = oxr.spec.name + "-providerconfig-kubernetes"
-            metadata.annotations = {
-              "krm.kcl.dev/ready" = "True"
+            metadata = {
+              name = oxr.spec.name + "-providerconfig-kubernetes"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                "krm.kcl.dev/ready" = "True"
+              }
             }
             spec = {
               credentials = {
                 secretRef = {
                   key = "kubeconfig"
                   name = oxr.spec.name + "-xplane-eks-cluster-auth"
-                  namespace = "eksac"
+                  namespace = oxr.metadata.namespace
                 }
                 source = "Secret"
               }
@@ -85,9 +91,12 @@ spec:
           private_subnets = oxr.spec.subnets.private
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "Subnet"
-            metadata.name = oxr.spec.name + "-xplane-private-subnet-" + zone
+            metadata = {
+              name = oxr.spec.name + "-xplane-private-subnet-" + zone
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               availabilityZone = "ap-southeast-" + zone
@@ -100,7 +109,10 @@ spec:
               }
               vpcIdRef.name = oxr.spec.vpcRef + "-xplane-vpc"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           } for zone, cidr in private_subnets]
   - step: create-eks-iam-role
     functionRef:
@@ -117,9 +129,12 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Role"
-            metadata.name = oxr.spec.name + "-xplane-eks-iam-role"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-iam-role"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               assumeRolePolicy = json.encode({
                 "Version" = "2012-10-17"
@@ -141,7 +156,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-eks-cluster-securitygroups
     functionRef:
@@ -157,9 +175,10 @@ spec:
           oxr = option("params").oxr
 
           clustersg = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroup"
             metadata.name = oxr.spec.name + "-xplane-eks-cluster-securitygroup"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               name = oxr.spec.name + "-xplane-eks-cluster-securitygroup"
               description = "Security Group for EKS Control Plane"
@@ -172,13 +191,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           nodesg = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroup"
             metadata.name = oxr.spec.name + "-xplane-eks-node-securitygroup"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               name = oxr.spec.name + "-xplane-eks-node-securitygroup"
               description = "Security Group for EKS Nodes"
@@ -191,13 +214,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           clusteringressrule = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroupIngressRule"
             metadata.name = oxr.spec.name + "-xplane-eks-cluster-securitygroup-ingress-rule"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               description = "Security Group Rule for Nodes to communicate with EKS Control Plane"
               region = oxr.spec.location
@@ -213,13 +240,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           clusteregressrule = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroupEgressRule"
             metadata.name = oxr.spec.name + "-xplane-eks-cluster-securitygroup-egress-rule"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               description = "Security Group Rule for EKS Control Plane to communicate with the Nodes"
               region = oxr.spec.location
@@ -235,13 +266,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           nodeingressrulenodes = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroupIngressRule"
             metadata.name = oxr.spec.name + "-xplane-eks-node-securitygroup-ingress-rule-nodes"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               description = "Security Group Rule for communication between Nodes"
               region = oxr.spec.location
@@ -255,13 +290,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+           spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           nodeingressrulecluster = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroupIngressRule"
             metadata.name = oxr.spec.name + "-xplane-eks-node-securitygroup-ingress-rule-control-plane"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               description = "Security Group Rule for EKS Control Plane to communicate with the Nodes"
               region = oxr.spec.location
@@ -277,13 +316,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
 
           nodeegressrulecluster = {
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "SecurityGroupEgressRule"
             metadata.name = oxr.spec.name + "-xplane-eks-node-securitygroup-egress-rule-control-plane"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               description = "Security Group Rule for the Nodes to communicate with EKS Control Plane"
               region = oxr.spec.location
@@ -297,8 +340,12 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }
+
           items = [clustersg, nodesg, clusteringressrule, clusteregressrule, nodeingressrulenodes, nodeingressrulecluster, nodeegressrulecluster]
   - step: create-eks-cluster
     functionRef:
@@ -314,29 +361,28 @@ spec:
           oxr = option("params").oxr
 
           cluster = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "Cluster"
-            metadata.name = oxr.spec.name + "-xplane-eks-cluster"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-cluster"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               roleArnRef.name = oxr.spec.name + "-xplane-eks-iam-role"
               version = oxr.spec.components.eks.version
-              accessConfig = [
-                {
-                  authenticationMode = "API_AND_CONFIG_MAP"
-                }
-              ]
+              accessConfig = {
+                authenticationMode = "API_AND_CONFIG_MAP"
+              }
               bootstrapSelfManagedAddons = False
-              vpcConfig = [
-                {
-                  endpointPrivateAccess = True
-                  endpointPublicAccess = True
-                  subnetIdRefs = [
-                    { name = oxr.spec.name + "-xplane-private-subnet-" + zone } for zone, cidr in oxr.spec.subnets.private
-                  ]
-                  securityGroupIdSelector.matchControllerRef = True
-                }
-              ]
+              vpcConfig = {
+                endpointPrivateAccess = True
+                endpointPublicAccess = True
+                subnetIdRefs = [
+                  { name = oxr.spec.name + "-xplane-private-subnet-" + zone } for zone, cidr in oxr.spec.subnets.private
+                ]
+                securityGroupIdSelector.matchControllerRef = True
+              }
               tags: {
                 Name = oxr.spec.name + "-xplane-eks-cluster"
                 Owner = "linus.yong"
@@ -344,13 +390,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           defaultaccessentry = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "AccessEntry"
-            metadata.name = oxr.spec.name + "-xplane-eks-default-access-entry"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-default-access-entry"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -362,13 +414,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           defaultaccesspolicyassociation = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "AccessPolicyAssociation"
-            metadata.name = oxr.spec.name + "-xplane-eks-default-access-policy-association"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-default-access-policy-association"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -376,13 +434,19 @@ spec:
               policyArn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
               principalArnRef.name =  oxr.spec.name + "-xplane-eks-default-access-entry"
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           crossplaneaccessentry = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "AccessEntry"
-            metadata.name = oxr.spec.name + "-xplane-eks-crossplane-access-entry"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-crossplane-access-entry"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -394,13 +458,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           crossplaneaccesspolicyassociation = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "AccessPolicyAssociation"
-            metadata.name = oxr.spec.name + "-xplane-eks-crossplane-access-policy-association"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-crossplane-access-policy-association"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -408,13 +478,19 @@ spec:
               policyArn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
               principalArnRef.name =  oxr.spec.name + "-xplane-eks-crossplane-access-entry"
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           karpenteraccessentry = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "AccessEntry"
-            metadata.name = oxr.spec.name + "-xplane-eks-karpenter-access-entry"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-karpenter-access-entry"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -427,7 +503,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           items = [cluster, defaultaccessentry, defaultaccesspolicyassociation, crossplaneaccessentry, crossplaneaccesspolicyassociation, karpenteraccessentry]
@@ -445,16 +524,22 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "Addon"
-            metadata.name = oxr.spec.name + "-xplane-eks-addon-pod-identity-agent"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-addon-pod-identity-agent"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               addonName = "eks-pod-identity-agent"
               addonVersion = oxr.spec.components.podidentityagentAddOn.version
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }]
   - step: create-ebs-csi-addon
     functionRef:
@@ -463,7 +548,7 @@ spec:
       apiVersion: krm.kcl.dev/v1alpha1
       kind: KCLInput
       metadata:
-        name: "xplane-eks-addon-pod-identity-agent"
+        name: "xplane-eks-addon-ebs-csi"
       spec:
         target: Default
         source: |
@@ -473,9 +558,12 @@ spec:
           ocds = option("params").ocds
 
           ebscsiiamrole = {
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Role"
-            metadata.name = oxr.spec.name + "-xplane-eks-addon-ebs-csi-iam-role"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-addon-ebs-csi-iam-role"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               assumeRolePolicy = json.encode({
                 Version = "2012-10-17"
@@ -501,13 +589,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }
 
           ebscsipodidentityassociation = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "PodIdentityAssociation"
-            metadata.name = oxr.spec.name + "-xplane-ebs-csi-pod-identity-association"
+            metadata = {
+              name = oxr.spec.name + "-xplane-ebs-csi-pod-identity-association"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -521,13 +615,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           ebscsiaddon = {
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "Addon"
-            metadata.name = oxr.spec.name + "-xplane-eks-addon-aws-ebs-csi-driver"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-addon-aws-ebs-csi-driver"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               addonName = "aws-ebs-csi-driver"
@@ -570,6 +670,7 @@ spec:
                   ]
                 }
               })
+
               podIdentityAssociation = [
                 {
                   roleArn = ocds[oxr.spec.name + "-xplane-eks-addon-ebs-csi-iam-role"]?.Resource?.status?.atProvider?.arn
@@ -577,7 +678,10 @@ spec:
                 }
               ]
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }
 
           items = [ebscsiiamrole, ebscsiaddon]
@@ -595,18 +699,23 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "ClusterAuth"
-            metadata.name = oxr.spec.name + "-xplane-eks-cluster-auth"
+            metadata = {
+              name = oxr.spec.name + "-xplane-eks-cluster-auth"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
             }
             spec.writeConnectionSecretToRef = {
               name = oxr.spec.name + "-xplane-eks-cluster-auth"
-              namespace = "eksac"
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }]
   - step: create-oidc-provider
     functionRef:
@@ -623,9 +732,12 @@ spec:
           ocds = option("params").ocds
 
           items = [{
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "OpenIDConnectProvider"
-            metadata.name = oxr.spec.name + "-xplane-oidc-provider"
+            metadata = {
+              name = oxr.spec.name + "-xplane-oidc-provider"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               clientIdList = ["sts.amazonaws.com"]
               thumbprintList = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
@@ -637,7 +749,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }]
   - step: create-fargate-pod-iam
     functionRef:
@@ -654,9 +769,12 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Role"
-            metadata.name = oxr.spec.name + "-xplane-fargate-pod-iam"
+            metadata = {
+              name = oxr.spec.name + "-xplane-fargate-pod-iam"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               assumeRolePolicy = json.encode({
                 Version = "2012-10-17"
@@ -678,7 +796,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }]
   - step: create-fargate-profile-karpenter
     functionRef:
@@ -694,9 +815,12 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "eks.aws.upbound.io/v1beta1"
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
             kind = "FargateProfile"
-            metadata.name = oxr.spec.name + "-xplane-fargate-profile-karpenter"
+            metadata = {
+              name = oxr.spec.name + "-xplane-fargate-profile-karpenter"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               region = oxr.spec.location
               clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
@@ -719,7 +843,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-eks"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
           }]
   - step: create-karpenter-iam
     functionRef:
@@ -741,9 +868,12 @@ spec:
           oidcissuer = regex.replace(ocds[oxr.spec.name + "-xplane-eks-cluster"]?.Resource?.status?.atProvider?.identity?[0]?.oidc?[0]?.issuer or "", "https://", "")
 
           policy = {
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Policy"
-            metadata.name = oxr.spec.name + "-xplane-karpenter-iam-policy"
+            metadata = {
+              name = oxr.spec.name + "-xplane-karpenter-iam-policy"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               policy = json.encode({
                 "Statement": [
@@ -820,13 +950,19 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }
 
           role = {
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Role"
-            metadata.name = oxr.spec.name + "-xplane-karpenter-iam-role"
+            metadata = {
+              name = oxr.spec.name + "-xplane-karpenter-iam-role"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               assumeRolePolicy = json.encode({
                 Version = "2012-10-17"
@@ -850,24 +986,36 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }
 
           attachement = {
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "RolePolicyAttachment"
-            metadata.name = oxr.spec.name + "-xplane-karpenter-policy-attachment"
+            metadata = {
+              name = oxr.spec.name + "-xplane-karpenter-policy-attachment"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               policyArnRef.name = oxr.spec.name + "-xplane-karpenter-iam-policy"
               roleRef.name = oxr.spec.name + "-xplane-karpenter-iam-role"
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }
 
           noderole = {
-            apiVersion = "iam.aws.upbound.io/v1beta1"
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
             kind = "Role"
-            metadata.name = oxr.spec.name + "-xplane-karpenter-node-iam"
+            metadata = {
+              name = oxr.spec.name + "-xplane-karpenter-node-iam"
+              namespace = oxr.metadata.namespace
+            }
             spec.forProvider = {
               assumeRolePolicy = json.encode({
                 "Version": "2012-10-17",
@@ -894,7 +1042,10 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-iam"
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
           }
 
           items = [policy, role, attachement, noderole]
@@ -902,7 +1053,7 @@ spec:
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-helm-karpenter"
@@ -912,11 +1063,14 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "helm.crossplane.io/v1beta1"
+            apiVersion = "helm.m.crossplane.io/v1beta1"
             kind = "Release"
-            metadata.name = oxr.spec.name + "-xplane-helm-karpenter"
-            metadata.annotations = {
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-karpenter"
+              namespace = oxr.metadata.namespace
+              annotations = {
                 "crossplane.io/external-name" = "karpenter"
+              }
             }
             spec = {
               forProvider = {
@@ -925,7 +1079,6 @@ spec:
                   repository = "oci://public.ecr.aws/karpenter"
                   version = oxr.spec.components.karpenterHelm.version
                 }
-                namespace = "kube-system"
                 set = [
                   {
                     name = "settings.clusterName"
@@ -948,9 +1101,13 @@ spec:
                     value = "1"
                   }
                 ]
+                namespace = "kube-system"
                 wait = True
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-helm"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
             }
           }]
   - step: create-default-ec2nc
@@ -967,16 +1124,21 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
-            metadata.name = oxr.spec.name + "-xplane-ec2nc-karpenter"
+            metadata = {
+              name = oxr.spec.name + "-xplane-ec2nc-karpenter"
+              namespace = oxr.metadata.namespace
+            }
             spec = {
-              deletionPolicy = "Orphan"
               forProvider = {
                 manifest = {
                   apiVersion = "karpenter.k8s.aws/v1"
                   kind = "EC2NodeClass"
-                  metadata.name = "default"
+                  metadata = {
+                    name = "default"
+                    namespace = oxr.metadata.namespace
+                  }
                   spec = {
                     amiSelectorTerms = [
                       { alias = "bottlerocket@latest" }
@@ -1021,7 +1183,12 @@ spec:
                   }
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }]
   - step: create-default-arm64-nodepool-karpenter
@@ -1038,7 +1205,7 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
             metadata.name = oxr.spec.name + "-xplane-default-arm64-nodepool-karpenter"
             spec = {
@@ -1046,7 +1213,10 @@ spec:
                 manifest = {
                   apiVersion = "karpenter.sh/v1"
                   kind = "NodePool"
-                  metadata.name = "infra-arm64"
+                  metadata = {
+                    name = "infra-arm64"
+                    namespace = oxr.metadata.namespace
+                  }
                   spec = {
                     disruption = {
                       consolidationPolicy = "WhenEmptyOrUnderutilized"
@@ -1107,7 +1277,10 @@ spec:
                   }
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }]
   - step: create-default-amd64-nodepool-karpenter
@@ -1124,15 +1297,21 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
-            metadata.name = oxr.spec.name + "-xplane-default-amd64-nodepool-karpenter"
+            metadata = {
+              name = oxr.spec.name + "-xplane-default-amd64-nodepool-karpenter"
+              namespace = oxr.metadata.namespace
+            }
             spec = {
               forProvider = {
                 manifest = {
                   apiVersion = "karpenter.sh/v1"
                   kind = "NodePool"
-                  metadata.name = "infra-amd64"
+                  metadata = {
+                    name = "infra-amd64"
+                    namespace = oxr.metadata.namespace
+                  }
                   spec = {
                     disruption = {
                       consolidationPolicy = "WhenEmptyOrUnderutilized"
@@ -1193,7 +1372,10 @@ spec:
                   }
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }]
   - step: create-karpenter-restart-cronjob
@@ -1210,9 +1392,12 @@ spec:
           oxr = option("params").oxr
 
           karpentercronjobrole = {
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
-            metadata.name = oxr.spec.name + "-xplane-role-restart-karpenter"
+            metadata = {
+              name = oxr.spec.name + "-xplane-role-restart-karpenter"
+              namespace = oxr.metadata.namespace
+            }
             spec = {
               forProvider = {
                 manifest = {
@@ -1232,12 +1417,15 @@ spec:
                   ]
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }
 
           karpentercronjobsa = {
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
             metadata.name = oxr.spec.name + "-xplane-sa-restart-karpenter"
             spec = {
@@ -1251,12 +1439,15 @@ spec:
                   }
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }
 
           karpentercronjobrolebinding = {
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
             metadata.name = oxr.spec.name + "-xplane-rolebinding-restart-karpenter"
             spec = {
@@ -1282,12 +1473,15 @@ spec:
                   ]
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }
 
           karpentercronjob = {
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
             metadata.name = oxr.spec.name + "-xplane-cronjob-karpenter"
             spec = {
@@ -1335,7 +1529,10 @@ spec:
                   }
                 }
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }
 
@@ -1360,11 +1557,14 @@ spec:
           kendpoint = regex.replace(ocds[oxr.spec.name + "-xplane-eks-cluster"]?.Resource?.status?.atProvider?.endpoint or "", "https://", "")
 
           items = [{
-            apiVersion = "helm.crossplane.io/v1beta1"
+            apiVersion = "helm.m.crossplane.io/v1beta1"
             kind = "Release"
-            metadata.name = oxr.spec.name + "-xplane-helm-cilium"
-            metadata.annotations = {
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-cilium"
+              namespace = oxr.metadata.namespace
+              annotations = {
                 "crossplane.io/external-name" = "cilium"
+              }
             }
             spec = {
               forProvider = {
@@ -1453,10 +1653,23 @@ spec:
                       }
                     }
                   }
+                  operator = {
+                    tolerations = [
+                      {
+                        key = "karpenter.sh/nodepool"
+                        operator = "Equal"
+                        value = "infra"
+                        effect = "NoSchedule"
+                      }
+                    ]
+                  }
                 }
                 wait = True
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-helm"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
             }
           }]
   - step: helm-install-coredns
@@ -1473,11 +1686,14 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "helm.crossplane.io/v1beta1"
+            apiVersion = "helm.m.crossplane.io/v1beta1"
             kind = "Release"
-            metadata.name = oxr.spec.name + "-xplane-helm-coredns"
-            metadata.annotations = {
-                "crossplane.io/external-name" = "coredns"
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-coredns"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                  "crossplane.io/external-name" = "coredns"
+              }
             }
             spec = {
               forProvider = {
@@ -1509,8 +1725,528 @@ spec:
                 }
                 wait = True
               }
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-helm"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
             }
+          }]
+  - step: create-aws-lb-controller-iam
+    functionRef:
+      name: function-kcl
+    input:
+      apiVersion: krm.kcl.dev/v1alpha1
+      kind: KCLInput
+      metadata:
+        name: "xplane-aws-lb-controller-iam"
+      spec:
+        target: Default
+        source: |
+          import json
+          oxr = option("params").oxr
+
+          policy = {
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
+            kind = "Policy"
+            metadata = {
+              name = oxr.spec.name + "-xplane-aws-lb-controller-iam-policy"
+              namespace = oxr.metadata.namespace
+            }
+            spec.forProvider = {
+              policy = json.encode({
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "iam:CreateServiceLinkedRole"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                      "StringEquals": {
+                        "iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:DescribeAccountAttributes",
+                      "ec2:DescribeAddresses",
+                      "ec2:DescribeAvailabilityZones",
+                      "ec2:DescribeInternetGateways",
+                      "ec2:DescribeVpcs",
+                      "ec2:DescribeVpcPeeringConnections",
+                      "ec2:DescribeSubnets",
+                      "ec2:DescribeSecurityGroups",
+                      "ec2:DescribeInstances",
+                      "ec2:DescribeNetworkInterfaces",
+                      "ec2:DescribeSubnets",
+                      "ec2:DescribeTags",
+                      "ec2:GetCoipPoolUsage",
+                      "ec2:DescribeCoipPools",
+                      "ec2:GetSecurityGroupsForVpc",
+                      "ec2:DescribeIpamPools",
+                      "elasticloadbalancing:DescribeLoadBalancers",
+                      "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                      "elasticloadbalancing:DescribeListeners",
+                      "elasticloadbalancing:DescribeListenerCertificates",
+                      "elasticloadbalancing:DescribeSSLPolicies",
+                      "elasticloadbalancing:DescribeRules",
+                      "elasticloadbalancing:DescribeTargetGroups",
+                      "elasticloadbalancing:DescribeTargetGroupAttributes",
+                      "elasticloadbalancing:DescribeTargetHealth",
+                      "elasticloadbalancing:DescribeTags",
+                      "elasticloadbalancing:DescribeTrustStores",
+                      "elasticloadbalancing:DescribeListenerAttributes",
+                      "elasticloadbalancing:DescribeCapacityReservation"
+                    ],
+                    "Resource": "*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "cognito-idp:DescribeUserPoolClient",
+                      "acm:ListCertificates",
+                      "acm:DescribeCertificate",
+                      "iam:ListServerCertificates",
+                      "iam:GetServerCertificate",
+                      "waf-regional:GetWebACL",
+                      "waf-regional:GetWebACLForResource",
+                      "waf-regional:AssociateWebACL",
+                      "waf-regional:DisassociateWebACL",
+                      "wafv2:GetWebACL",
+                      "wafv2:GetWebACLForResource",
+                      "wafv2:AssociateWebACL",
+                      "wafv2:DisassociateWebACL",
+                      "shield:GetSubscriptionState",
+                      "shield:DescribeProtection",
+                      "shield:CreateProtection",
+                      "shield:DeleteProtection"
+                    ],
+                    "Resource": "*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:AuthorizeSecurityGroupIngress",
+                      "ec2:RevokeSecurityGroupIngress"
+                    ],
+                    "Resource": "*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:CreateSecurityGroup"
+                    ],
+                    "Resource": "*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:CreateTags"
+                    ],
+                    "Resource": "arn:aws:ec2:*:*:security-group/*",
+                    "Condition": {
+                      "StringEquals": {
+                        "ec2:CreateAction": "CreateSecurityGroup"
+                      },
+                      "Null": {
+                        "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:CreateTags",
+                      "ec2:DeleteTags"
+                    ],
+                    "Resource": "arn:aws:ec2:*:*:security-group/*",
+                    "Condition": {
+                      "Null": {
+                        "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
+                        "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "ec2:AuthorizeSecurityGroupIngress",
+                      "ec2:RevokeSecurityGroupIngress",
+                      "ec2:DeleteSecurityGroup"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                      "Null": {
+                        "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:CreateLoadBalancer",
+                      "elasticloadbalancing:CreateTargetGroup"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                      "Null": {
+                        "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:CreateListener",
+                      "elasticloadbalancing:DeleteListener",
+                      "elasticloadbalancing:CreateRule",
+                      "elasticloadbalancing:DeleteRule"
+                    ],
+                    "Resource": "*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:AddTags",
+                      "elasticloadbalancing:RemoveTags"
+                    ],
+                    "Resource": [
+                      "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
+                    ],
+                    "Condition": {
+                      "Null": {
+                        "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
+                        "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:AddTags",
+                      "elasticloadbalancing:RemoveTags"
+                    ],
+                    "Resource": [
+                      "arn:aws:elasticloadbalancing:*:*:listener/net/*/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:listener/app/*/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:listener-rule/net/*/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:listener-rule/app/*/*/*"
+                    ]
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                      "elasticloadbalancing:SetIpAddressType",
+                      "elasticloadbalancing:SetSecurityGroups",
+                      "elasticloadbalancing:SetSubnets",
+                      "elasticloadbalancing:DeleteLoadBalancer",
+                      "elasticloadbalancing:ModifyTargetGroup",
+                      "elasticloadbalancing:ModifyTargetGroupAttributes",
+                      "elasticloadbalancing:DeleteTargetGroup",
+                      "elasticloadbalancing:ModifyListenerAttributes",
+                      "elasticloadbalancing:ModifyCapacityReservation",
+                      "elasticloadbalancing:ModifyIpPools"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                      "Null": {
+                        "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:AddTags"
+                    ],
+                    "Resource": [
+                      "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
+                      "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
+                    ],
+                    "Condition": {
+                      "StringEquals": {
+                        "elasticloadbalancing:CreateAction": [
+                          "CreateTargetGroup",
+                          "CreateLoadBalancer"
+                        ]
+                      },
+                      "Null": {
+                        "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+                      }
+                    }
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:RegisterTargets",
+                      "elasticloadbalancing:DeregisterTargets"
+                    ],
+                    "Resource": "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*"
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "elasticloadbalancing:SetWebAcl",
+                      "elasticloadbalancing:ModifyListener",
+                      "elasticloadbalancing:AddListenerCertificates",
+                      "elasticloadbalancing:RemoveListenerCertificates",
+                      "elasticloadbalancing:ModifyRule",
+                      "elasticloadbalancing:SetRulePriorities"
+                    ],
+                    "Resource": "*"
+                  }
+                ]
+              })
+              tags: {
+                Name = oxr.spec.name + "-xplane-aws-lb-controller-iam-policy"
+                Owner = "linus.yong"
+                Environment = "sandbox"
+                Project = "crossplane"
+              }
+            }
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
+          }
+
+          role = {
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
+            kind = "Role"
+            metadata = {
+              name = oxr.spec.name + "-xplane-aws-lb-controller-iam-role"
+              namespace = oxr.metadata.namespace
+            }
+            spec.forProvider = {
+               assumeRolePolicy = json.encode({
+                Version = "2012-10-17"
+                Statement = [{
+                  "Sid": "AllowEksAuthToAssumeRoleForPodIdentity",
+                  "Effect": "Allow",
+                  "Principal": {
+                      "Service": "pods.eks.amazonaws.com"
+                  },
+                  "Action": [
+                      "sts:AssumeRole",
+                      "sts:TagSession"
+                  ]
+                }]
+              })
+              tags: {
+                Name = oxr.spec.name + "-xplane-aws-lb-controller-iam-role"
+                Owner = "linus.yong"
+                Environment = "sandbox"
+                Project = "crossplane"
+              }
+            }
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
+          }
+
+          attachement = {
+            apiVersion = "iam.aws.m.upbound.io/v1beta1"
+            kind = "RolePolicyAttachment"
+            metadata = {
+              name = oxr.spec.name + "-xplane-aws-lb-controller-policy-attachment"
+              namespace = oxr.metadata.namespace
+            }
+            spec.forProvider = {
+              policyArnRef.name = oxr.spec.name + "-xplane-aws-lb-controller-iam-policy"
+              roleRef.name = oxr.spec.name + "-xplane-aws-lb-controller-iam-role"
+            }
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-iam"
+            }
+          }
+
+          podidentityassociation = {
+            apiVersion = "eks.aws.m.upbound.io/v1beta1"
+            kind = "PodIdentityAssociation"
+            metadata = {
+              name = oxr.spec.name + "-xplane-aws-lb-controller-pod-identity-association"
+              namespace = oxr.metadata.namespace
+            }
+            spec.forProvider = {
+              clusterNameRef.name = oxr.spec.name + "-xplane-eks-cluster"
+              namespace = "kube-system"
+              region = oxr.spec.location
+              roleArnRef.name = oxr.spec.name + "-xplane-aws-lb-controller-iam-role"
+              serviceAccount = "aws-load-balancer-controller"
+            }
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-eks"
+            }
+          }
+
+          items = [policy, role, attachement, podidentityassociation]
+  - step: helm-install-aws-lb-controller
+    functionRef:
+      name: function-kcl
+    input:
+      apiVersion: krm.kcl.dev/v1alpha1
+      kind: KCLInput
+      metadata:
+        name: "xplane-helm-aws-lb-controller"
+      spec:
+        target: Default
+        source: |
+          oxr = option("params").oxr
+
+          items = [{
+            apiVersion = "helm.m.crossplane.io/v1beta1"
+            kind = "Release"
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-aws-lb-controller"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                  "crossplane.io/external-name" = "aws-load-balancer-controller"
+              }
+            }
+            spec = {
+              forProvider = {
+                chart = {
+                  name = "aws-load-balancer-controller"
+                  repository = "https://aws.github.io/eks-charts"
+                  version = oxr.spec.components.awsloadbalancercontrollerHelm.version
+                }
+                namespace = "kube-system"
+                set = [
+                  {
+                    name = "clusterName"
+                    value = oxr.spec.name + "-xplane-eks-cluster"
+                  },
+                  {
+                    name = "replicaCount"
+                    value = "1"
+                  }
+                ]
+                values = {
+                  tolerations = [
+                    {
+                      key = "karpenter.sh/nodepool"
+                      operator = "Equal"
+                      value = "infra"
+                      effect = "NoSchedule"
+                    }
+                  ]
+                }
+              }
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
+            }
+          }]
+  - step: helm-install-argocd
+    functionRef:
+      name: function-kcl
+    input:
+      apiVersion: krm.kcl.dev/v1alpha1
+      kind: KCLInput
+      metadata:
+        name: "xplane-helm-argocd"
+      spec:
+        target: Default
+        source: |
+          oxr = option("params").oxr
+
+          items = [{
+            apiVersion = "helm.m.crossplane.io/v1beta1"
+            kind = "Release"
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-argocd"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                  "crossplane.io/external-name" = "argocd"
+              }
+            }
+            spec = {
+              forProvider = {
+                chart = {
+                  name = "argo-cd"
+                  repository = "https://argoproj.github.io/argo-helm"
+                  version = oxr.spec.components.argocdHelm.version
+                }
+                namespace = "argocd"
+                values = {
+                  global = {
+                    tolerations = [
+                      {
+                        key = "karpenter.sh/nodepool"
+                        operator = "Equal"
+                        value = "infra"
+                        effect = "NoSchedule"
+                      }
+                    ]
+                  }
+                }
+                wait = True
+              }
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
+             }
+          }]
+  - step: helm-install-metrics-server
+    functionRef:
+      name: function-kcl
+    input:
+      apiVersion: krm.kcl.dev/v1alpha1
+      kind: KCLInput
+      metadata:
+        name: "xplane-helm-metrics-server"
+      spec:
+        target: Default
+        source: |
+          oxr = option("params").oxr
+
+          items = [{
+            apiVersion = "helm.m.crossplane.io/v1beta1"
+            kind = "Release"
+            metadata = {
+              name = oxr.spec.name + "-xplane-helm-metrics-server"
+              namespace = oxr.metadata.namespace
+              annotations = {
+                  "crossplane.io/external-name" = "metrics-server"
+              }
+            }
+            spec = {
+              forProvider = {
+                chart = {
+                  name = "metrics-server"
+                  repository = "https://kubernetes-sigs.github.io/metrics-server"
+                  version = oxr.spec.components.metricsserverHelm.version
+                }
+                namespace = "metrics-server"
+                values = {
+                  tolerations = [
+                    {
+                      key = "karpenter.sh/nodepool"
+                      operator = "Equal"
+                      value = "infra"
+                      effect = "NoSchedule"
+                    }
+                  ]
+                }
+                wait = True
+              }
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-helm"
+              }
+             }
           }]
   - step: create-storageclass-gp3
     functionRef:
@@ -1526,9 +2262,12 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "kubernetes.crossplane.io/v1alpha2"
+            apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
             kind = "Object"
-            metadata.name = oxr.spec.name + "-xplane-storageclass-gp3"
+            metadata = {
+              name = oxr.spec.name + "-xplane-storageclass-gp3"
+              namespace = oxr.metadata.namespace
+            }
             spec = {
               forProvider = {
                 manifest = {
@@ -1536,21 +2275,27 @@ spec:
                   kind = "StorageClass"
                   metadata = {
                     name = "gp3"
+                    namespace = oxr.metadata.namespace
                     annotations = {
                       "storageclass.kubernetes.io/is-default-class" = "true"
                     }
                   }
-                  provisioner = "kubernetes.io/aws-ebs"
+                  allowStorageClassExpansion = True
+                  provisioner = "ebs.csi.aws.com"
+                  parameters = {
+                    "csi.storage.k8s.io/fstype" = "xfs"
+                    encrypted = "true"
+                    type = "gp3"
+                  }
                   reclaimPolicy = "Delete"
                   volumeBindingMode = "WaitForFirstConsumer"
-                  parameters = {
-                    type = "gp3"
-                    fsType = "ext4"
-                  }
                 }
               }
               managementPolicies = ["Create", "Update", "Observe", "Delete"]
-              providerConfigRef.name = oxr.spec.name + "-providerconfig-kubernetes"
+              providerConfigRef = {
+                kind = "ProviderConfig"
+                name = oxr.spec.name + "-providerconfig-kubernetes"
+              }
             }
           }]
   - step: teardown-sequence
@@ -1566,153 +2311,32 @@ spec:
         source: |
           oxr = option("params").oxr
 
-          clusterreleasekarpanter = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
+          clusterafternodes = {
+            apiVersion = "protection.crossplane.io/v1beta1"
             kind = "Usage"
-            metadata.name = oxr.spec.name + "-cluster-release-after-karpenter"
+            metadata = {
+              name = oxr.spec.name + "-cluster-after-nodes"
+              namespace = oxr.metadata.namespace
+            }
             spec = {
               of = {
-                apiVersion = "eks.aws.upbound.io/v1beta1"
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
                 kind = "Cluster"
-                resourceRef.name = oxr.spec.name + "-xplane-eks-cluster"
+                resourceRef = {
+                  name = oxr.spec.name + "-xplane-eks-cluster"
+                  namespace = oxr.metadata.namespace
+                }
               }
               by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-            }
-          }
-
-          clusterauthreleasekarpenter = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-clusterauth-release-after-karpenter"
-            spec = {
-              of = {
-                apiVersion = "eks.aws.upbound.io/v1beta1"
-                kind = "ClusterAuth"
-                resourceRef.name = oxr.spec.name + "-xplane-eks-cluster-auth"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-            }
-          }
-
-          accessentryreleasekarpenter = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-access-entry-release-after-karpenter"
-            spec = {
-              of = {
-                apiVersion = "eks.aws.upbound.io/v1beta1"
-                kind = "AccessEntry"
-                resourceRef.name = oxr.spec.name + "-xplane-eks-crossplane-access-entry"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-            }
-          }
-
-          accesspolicyassociationreleasekarpenter = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-access-policy-association-release-after-karpenter"
-            spec = {
-              of = {
-                apiVersion = "eks.aws.upbound.io/v1beta1"
-                kind = "AccessPolicyAssociation"
-                resourceRef.name = oxr.spec.name + "-xplane-eks-crossplane-access-policy-association"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-            }
-          }
-
-          helmproviderconfigreleasekarpenter = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-helm-providerconfig-release-after-karpenter"
-            spec = {
-              of = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "ProviderConfig"
-                resourceRef.name = oxr.spec.name + "-providerconfig-helm"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-            }
-          }
-
-          karpenterreleasecilium = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-karpetner-release-after-cilium"
-            spec = {
-              of = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-cilium"
-              }
-            }
-          }
-
-          karpenterreleasecoredns = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-karpetner-release-after-coredns"
-            spec = {
-              of = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-karpenter"
-              }
-              by = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-coredns"
-              }
-            }
-          }
-
-          corednsreleasenodepool = {
-            apiVersion = "apiextensions.crossplane.io/v1beta1"
-            kind = "Usage"
-            metadata.name = oxr.spec.name + "-coredns-release-after-nodepool"
-            spec = {
-              of = {
-                apiVersion = "helm.crossplane.io/v1beta1"
-                kind = "Release"
-                resourceRef.name = oxr.spec.name + "-xplane-helm-coredns"
-              }
-              by = {
-                apiVersion = "kubernetes.crossplane.io/v1alpha2"
+                apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
                 kind = "Object"
-                resourceRef.name = oxr.spec.name + "-xplane-default-amd64-nodepool-karpenter"
+                resourceRef.name = oxr.spec.name + "-xplane-default-arm64-nodepool-karpenter"
               }
             }
           }
 
           items = [
-            clusterreleasekarpanter, clusterauthreleasekarpenter, accessentryreleasekarpenter, accesspolicyassociationreleasekarpenter, 
-            helmproviderconfigreleasekarpenter, karpenterreleasecilium, karpenterreleasecoredns,corednsreleasenodepool
+            clusterafternodes
           ]
   - step: auto-ready
     functionRef:
@@ -1730,3 +2354,8 @@ spec:
       - sequence:
         - xplane-fargate-profile-karpenter$
         - xplane-helm-karpenter$
+        - xplane-helm-cilium$
+        - xplane-helm-aws-lb-controller$
+        - xplane-helm-coredns$
+        - xplane-helm-metrics-server$
+        - xplane-helm-argocd$

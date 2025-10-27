@@ -1,18 +1,18 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: x-network-kcl
+  name: x-network
 spec:
   compositeTypeRef:
     apiVersion: consumable.trustbank.sg/v1alpha1
-    kind: xNetworkKcl
+    kind: xNetwork
   mode: Pipeline
   pipeline:
   - step: create-vpc
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-vpc"
@@ -22,9 +22,10 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "VPC"
             metadata.name = oxr.spec.name + "-xplane-vpc"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               cidrBlock = oxr.spec.vpcCidr
@@ -37,13 +38,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef: {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-public-subnets
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-subnets"
@@ -54,9 +59,10 @@ spec:
           public_subnets = oxr.spec.subnets.public
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "Subnet"
             metadata.name = oxr.spec.name + "-xplane-public-subnet-" + zone
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               availabilityZone = "ap-southeast-" + zone
@@ -69,7 +75,11 @@ spec:
               }
               vpcIdRef.name = oxr.spec.name + "-xplane-vpc"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef: {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           } for zone, cidr in public_subnets]
   - step: create-igw
     functionRef:
@@ -85,9 +95,10 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "InternetGateway"
             metadata.name = oxr.spec.name + "-xplane-igw"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               tags: {
@@ -98,13 +109,17 @@ spec:
               }
               vpcIdRef.name = oxr.spec.name + "-xplane-vpc"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef: {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-public-rt
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-public-rt"
@@ -114,9 +129,10 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "RouteTable"
             metadata.name = oxr.spec.name + "-xplane-public-rt"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               tags: {
@@ -127,13 +143,17 @@ spec:
               }
               vpcIdRef.name = oxr.spec.name + "-xplane-vpc"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef: {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-public-route
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-public-route"
@@ -143,22 +163,27 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "Route"
             metadata.name = oxr.spec.name + "-xplane-public-route"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               routeTableIdRef.name = oxr.spec.name + "-xplane-public-rt"
               destinationCidrBlock: "0.0.0.0/0"
               gatewayIdRef.name = oxr.spec.name + "-xplane-igw"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-rt-association
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-rt-association"
@@ -169,21 +194,26 @@ spec:
           public_subnets = oxr.spec.subnets.public
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "RouteTableAssociation"
             metadata.name = oxr.spec.name + "-xplane-public-rta-" + zone
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               routeTableIdRef.name = oxr.spec.name + "-xplane-public-rt"
               subnetIdRef.name = oxr.spec.name + "-xplane-public-subnet-" + zone
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           } for zone, cidr in public_subnets]
   - step: create-natgwe-eip
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-natgw-eip"
@@ -193,9 +223,10 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "EIP"
             metadata.name = oxr.spec.name + "-xplane-natgw-eip"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               tags: {
@@ -205,13 +236,17 @@ spec:
                 Project = "crossplane"
               }
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-natgw
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-natgw"
@@ -221,9 +256,10 @@ spec:
           oxr = option("params").oxr
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "NATGateway"
             metadata.name = oxr.spec.name + "-xplane-natgw"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               tags: {
@@ -235,13 +271,17 @@ spec:
               allocationIdRef.name = oxr.spec.name + "-xplane-natgw-eip"
               subnetIdRef.name = oxr.spec.name + "-xplane-public-subnet-1b"
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: create-default-rt
     functionRef:
       name: function-kcl
     input:
-      apiVersion: krm.kcl.dev/v1alpha1
+      apiVersion: krm.kcl.dev/v1beta1
       kind: KCLInput
       metadata:
         name: "xplane-default-rt"
@@ -252,9 +292,10 @@ spec:
           ocds = option("params").ocds
 
           items = [{
-            apiVersion = "ec2.aws.upbound.io/v1beta1"
+            apiVersion = "ec2.aws.m.upbound.io/v1beta1"
             kind = "DefaultRouteTable"
             metadata.name = oxr.spec.name + "-xplane-default-rt"
+            metadata.namespace = oxr.metadata.namespace
             spec.forProvider = {
               region = oxr.spec.location
               tags: {
@@ -269,7 +310,11 @@ spec:
                 natGatewayId = ocds[oxr.spec.name + "-xplane-natgw"]?.Resource?.status?.atProvider?.id or ""
               }]
             }
-            spec.providerConfigRef.name = "provider-aws-ec2"
+            spec.managementPolicies: ["*"]
+            spec.providerConfigRef = {
+              kind = "ProviderConfig"
+              name = "provider-aws-ec2"
+            }
           }]
   - step: auto-ready
     functionRef:

@@ -1,16 +1,17 @@
 provider:
   awsFamily:
+    ## https://marketplace.upbound.io/providers/upbound/provider-family-aws/
     name: aws-provider
     accountId: "390945758345"
-    crossplaneIamRoleName: "eksac-crossplane-iam-role"
+    crossplaneIamRoleName: "eksac-control-plane-crossplane-iam-role"
     region: ap-southeast-1
     deploymentRuntimeConfig:
       name: aws-deployment-runtime-config
       deploymentTemplate:
         spec:
           replicas: 1
-    version: v1
-    # version: v1.23.1
+    version: v2
+    # version: v2.1.1
     providers:
     - name: provider-aws-ec2
       providerConfig:
@@ -25,11 +26,13 @@ provider:
         credentials:
           source: IRSA
   helm:
-    version: v0
-    # version: v0.21.1
+    ## https://marketplace.upbound.io/providers/upbound/provider-helm/
+    version: v1
+    # version: v1.0.3
   kubernetes:
-    version: v0
-    # version: v0.18.1
+    ## https://marketplace.upbound.io/providers/upbound/provider-kubernetes/
+    version: v1
+    # version: v1.0.1
     providers:
     - name: provider-kubernetes
       providerConfig:
@@ -37,8 +40,8 @@ provider:
           source: InjectedIdentity
 function:
   kcl:
-    version: v0.11.4
+    version: v0.11.5
   autoready:
-    version: v0.5.0
+    version: v0.5.1
   sequencer:
-    version: v0.2.3
+    version: v0.3.0

@@ -1,0 +1,17 @@
+apiVersion: consumable.trustbank.sg/v1alpha1
+kind: Vpc
+metadata:
+  name: test01
+  namespace: eksac
+spec:
+  name: test01
+  # allowDeleteion: "true"
+  # externalName: "vpc-08c6a12f4a2c12a86"
+  # paused: "false"
+  location: "ap-southeast-1"
+  vpcCidr: "10.0.0.0/22"
+  subnets:
+    public:
+      z1Cidr: "10.0.0.0/28"
+      z2Cidr: "10.0.0.16/28"
+      z3Cidr: "10.0.0.32/28"

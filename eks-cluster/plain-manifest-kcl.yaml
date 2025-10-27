@@ -1,5 +1,5 @@
 apiVersion: consumable.trustbank.sg/v1alpha1
-kind: NetworkKcl
+kind: xNetwork
 metadata:
   name: linus-network
   namespace: eksac
@@ -14,7 +14,7 @@ spec:
       1c: "10.0.0.32/28"
 ---
 apiVersion: consumable.trustbank.sg/v1alpha1
-kind: EksClusterKcl
+kind: xEksCluster
 metadata:
   name: linus-cluster
   namespace: eksac
@@ -29,18 +29,24 @@ spec:
       1b: "10.0.1.0/25"
       1c: "10.0.1.128/25"
   components:
+    awsloadbalancercontrollerHelm:
+      version: "1.14.1"
+    argocdHelm:
+      version: "9.0.3"
     ciliumHelm:
-      version: "1.17.3"
+      version: "1.18.3"
     corednsHelm:
-      version: "1.42.1"
+      version: "1.45.0"
     ebscsiAddOn:
-      version: "v1.43.0-eksbuild.1"
-    podidentityagentAddOn:
-      version: "v1.3.7-eksbuild.2"
+      version: "v1.51.1-eksbuild.1"
     eks:
-      version: "1.32"
+      version: "1.34"
     karpenterHelm:
-      version: "1.4.0"
+      version: "1.8.1"
+    metricsserverHelm:
+      version: "3.13.0"
+    podidentityagentAddOn:
+      version: "v1.3.9-eksbuild.3"
 ---
 # apiVersion: consumable.trustbank.sg/v1alpha1
 # kind: EksComponentKcl
@@ -52,9 +58,32 @@ spec:
 #   location: "ap-southeast-1"
 #   clusterRef: linus-cluster
 #   components:
-#     metricsserverHelm:
-#       version: "3.12.2"
-#     awsloadbalancercontrollerHelm:
-#       version: "1.13.0"
 #     istioHelm:
-#       version: "1.26.0"
+#       version: "1.26.1"
+---
+## ProviderConfigs
+# kubectl apply -f - <<EOF
+# apiVersion: aws.m.upbound.io/v1beta1
+# kind: ProviderConfig
+# metadata:
+#   name: provider-aws-ec2
+# spec:
+#   credentials:
+#     source: IRSA
+# ---
+# apiVersion: aws.m.upbound.io/v1beta1
+# kind: ProviderConfig
+# metadata:
+#   name: provider-aws-eks
+# spec:
+#   credentials:
+#     source: IRSA
+# ---
+# apiVersion: aws.m.upbound.io/v1beta1
+# kind: ProviderConfig
+# metadata:
+#   name: provider-aws-iam
+# spec:
+#   credentials:
+#     source: IRSA
+# EOF
