@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xKubeObject
 metadata:
   name: test
@@ -8,7 +8,7 @@ spec:
     eks:
       version: "1.29"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: KubeObject
 metadata:
   name: test
@@ -18,6 +18,6 @@ spec:
     eks:
       version: "1.29"
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xKubeObject
     name: test

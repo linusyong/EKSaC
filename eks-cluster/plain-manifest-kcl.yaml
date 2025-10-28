@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xNetwork
 metadata:
   name: linus-network
@@ -13,7 +13,7 @@ spec:
       1b: "10.0.0.16/28"
       1c: "10.0.0.32/28"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xEksCluster
 metadata:
   name: linus-cluster
@@ -48,7 +48,7 @@ spec:
     podidentityagentAddOn:
       version: "v1.3.9-eksbuild.3"
 ---
-# apiVersion: consumable.trustbank.sg/v1alpha1
+# apiVersion: consumable.minisrc.com/v1alpha1
 # kind: EksComponentKcl
 # metadata:
 #   name: linus-cluster-components
@@ -67,6 +67,7 @@ spec:
 # kind: ProviderConfig
 # metadata:
 #   name: provider-aws-ec2
+#   namespace: eksac
 # spec:
 #   credentials:
 #     source: IRSA
@@ -75,6 +76,7 @@ spec:
 # kind: ProviderConfig
 # metadata:
 #   name: provider-aws-eks
+#   namespace: eksac
 # spec:
 #   credentials:
 #     source: IRSA
@@ -83,6 +85,7 @@ spec:
 # kind: ProviderConfig
 # metadata:
 #   name: provider-aws-iam
+#   namespace: eksac
 # spec:
 #   credentials:
 #     source: IRSA

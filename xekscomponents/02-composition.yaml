@@ -4,7 +4,7 @@ metadata:
   name: x-eks-components
 spec:
   compositeTypeRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xEksComponents
   patchSets:
   - name: clusterready-patchset

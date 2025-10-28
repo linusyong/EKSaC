@@ -1,10 +1,10 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xeksclusters.consumable.trustbank.sg
+  name: xeksclusters.consumable.minisrc.com
 spec:
   scope: Namespaced
-  group: consumable.trustbank.sg
+  group: consumable.minisrc.com
   names:
     kind: xEksCluster
     plural: xeksclusters

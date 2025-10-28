@@ -1,4 +1,4 @@
-# xNetwork (xnetworks.comsumable.trustbank.sg)
+# xNetwork (xnetworks.comsumable.minisrc.com)
 
 ## Anatomy of xNetwork
 This is the EKSaC network component which includes:
@@ -14,7 +14,7 @@ This is the EKSaC network component which includes:
 
 ## Example of xNetwork (XR)
 ```yaml
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xNetwork
 metadata:
   name: sandbox-eksac01
@@ -28,21 +28,21 @@ spec:
       z2Cidr: "10.0.0.16/28"
       z3Cidr: "10.0.0.32/28"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: Network
 metadata:
   name: sandbox-eksac01
 spec:
   name: sandbox-eksac01
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xNetwork
     name: sandbox-eksac01
 ```
 
 Take note that the above is a workaround for ArgoCD due to the `XR` mutation that cause ArgoCD to have some warning.  Even though the mutation can be ignored in ArgoCD, it is decided that creating a `Claim` separated from `XR` is a better solution.  Instead of the above combined `Claim` and `XR` yamls, we can just create a `Claim`:
 ```yaml
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: Network
 metadata:
   name: sandbox-eksac01
@@ -56,7 +56,7 @@ spec:
       z2Cidr: "10.0.0.16/28"
       z3Cidr: "10.0.0.32/28"
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xNetwork
     name: sandbox-eksac01
 ```

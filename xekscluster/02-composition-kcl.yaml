@@ -4,7 +4,7 @@ metadata:
   name: x-ekscluster
 spec:
   compositeTypeRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xEksCluster
   mode: Pipeline
   pipeline:
@@ -1104,6 +1104,7 @@ spec:
                 namespace = "kube-system"
                 wait = True
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -1277,6 +1278,7 @@ spec:
                   }
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1372,6 +1374,7 @@ spec:
                   }
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1417,6 +1420,7 @@ spec:
                   ]
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1439,6 +1443,7 @@ spec:
                   }
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1473,6 +1478,7 @@ spec:
                   ]
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1529,6 +1535,7 @@ spec:
                   }
                 }
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -1658,14 +1665,15 @@ spec:
                       {
                         key = "karpenter.sh/nodepool"
                         operator = "Equal"
-                        value = "infra"
                         effect = "NoSchedule"
+                        value = "infra"
                       }
                     ]
                   }
                 }
                 wait = True
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -1723,8 +1731,8 @@ spec:
                     }
                   ]
                 }
-                wait = True
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -2141,7 +2149,10 @@ spec:
                     }
                   ]
                 }
+                wait = True
+                waitTimeout = "10m"
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -2193,6 +2204,7 @@ spec:
                 }
                 wait = True
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -2242,6 +2254,7 @@ spec:
                 }
                 wait = True
               }
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-helm"
@@ -2291,7 +2304,7 @@ spec:
                   volumeBindingMode = "WaitForFirstConsumer"
                 }
               }
-              managementPolicies = ["Create", "Update", "Observe", "Delete"]
+              managementPolicies = ["Create", "Update", "Observe"]
               providerConfigRef = {
                 kind = "ProviderConfig"
                 name = oxr.spec.name + "-providerconfig-kubernetes"
@@ -2311,11 +2324,11 @@ spec:
         source: |
           oxr = option("params").oxr
 
-          clusterafternodes = {
+          clusterafterarmnodes = {
             apiVersion = "protection.crossplane.io/v1beta1"
             kind = "Usage"
             metadata = {
-              name = oxr.spec.name + "-cluster-after-nodes"
+              name = oxr.spec.name + "-cluster-after-arm-nodes"
               namespace = oxr.metadata.namespace
             }
             spec = {
@@ -2335,8 +2348,80 @@ spec:
             }
           }
 
+          clusterafteramdnodes = {
+            apiVersion = "protection.crossplane.io/v1beta1"
+            kind = "Usage"
+            metadata = {
+              name = oxr.spec.name + "-cluster-after-amd-nodes"
+              namespace = oxr.metadata.namespace
+            }
+            spec = {
+              of = {
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
+                kind = "Cluster"
+                resourceRef = {
+                  name = oxr.spec.name + "-xplane-eks-cluster"
+                  namespace = oxr.metadata.namespace
+                }
+              }
+              by = {
+                apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
+                kind = "Object"
+                resourceRef.name = oxr.spec.name + "-xplane-default-amd64-nodepool-karpenter"
+              }
+            }
+          }
+
+          xplaneaccessentryaftercluster = {
+            apiVersion = "protection.crossplane.io/v1beta1"
+            kind = "Usage"
+            metadata = {
+              name = oxr.spec.name + "-xplane-accessentry-after-cluster"
+              namespace = oxr.metadata.namespace
+            }
+            spec = {
+              of = {
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
+                kind = "AccessEntry"
+                resourceRef = {
+                  name = oxr.spec.name + "-xplane-eks-crossplane-access-entry"
+                  namespace = oxr.metadata.namespace
+                }
+              }
+              by = {
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
+                kind = "Cluster"
+                resourceRef.name = oxr.spec.name + "-xplane-eks-cluster"
+              }
+            }
+          }
+
+          xplaneaccesspolicyassociationaftercluster = {
+            apiVersion = "protection.crossplane.io/v1beta1"
+            kind = "Usage"
+            metadata = {
+              name = oxr.spec.name + "-xplane-accesspolicy-association-after-cluster"
+              namespace = oxr.metadata.namespace
+            }
+            spec = {
+              of = {
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
+                kind = "AccessPolicyAssociation"
+                resourceRef = {
+                  name = oxr.spec.name + "-xplane-eks-crossplane-access-policy-association"
+                  namespace = oxr.metadata.namespace
+                }
+              }
+              by = {
+                apiVersion = "eks.aws.m.upbound.io/v1beta1"
+                kind = "Cluster"
+                resourceRef.name = oxr.spec.name + "-xplane-eks-cluster"
+              }
+            }
+          }
+
           items = [
-            clusterafternodes
+            clusterafterarmnodes, clusterafteramdnodes, xplaneaccessentryaftercluster
           ]
   - step: auto-ready
     functionRef:
@@ -2355,7 +2440,7 @@ spec:
         - xplane-fargate-profile-karpenter$
         - xplane-helm-karpenter$
         - xplane-helm-cilium$
-        - xplane-helm-aws-lb-controller$
         - xplane-helm-coredns$
+        - xplane-helm-aws-lb-controller$
         - xplane-helm-metrics-server$
         - xplane-helm-argocd$

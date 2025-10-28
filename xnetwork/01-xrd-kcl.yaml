@@ -1,10 +1,10 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xnetworks.consumable.trustbank.sg
+  name: xnetworks.consumable.minisrc.com
 spec:
   scope: Namespaced
-  group: consumable.trustbank.sg
+  group: consumable.minisrc.com
   names:
     kind: xNetwork
     plural: xnetworks

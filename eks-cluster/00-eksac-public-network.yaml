@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xNetwork
 metadata:
   name: eksac-vpc01
@@ -13,7 +13,7 @@ spec:
       z2Cidr: "10.0.0.16/28"
       z3Cidr: "10.0.0.32/28"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: Network
 metadata:
   name: eksac-vpc01
@@ -21,6 +21,6 @@ metadata:
 spec:
   name: eksac-vpc01
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xNetwork
     name: eksac-vpc01

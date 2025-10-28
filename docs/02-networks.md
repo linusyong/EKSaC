@@ -16,7 +16,7 @@ In EKSaC, the EksClusterKcl _XRC_ will only create the private _subnets_ and ass
   <summary>XR</summary>
 
   ```yaml
-  apiVersion: consumable.trustbank.sg/v1alpha1
+  apiVersion: consumable.minisrc.com/v1alpha1
   kind: EksClusterKcl
   metadata:
     name: linus-cluster

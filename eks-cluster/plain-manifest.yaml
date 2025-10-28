@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: Network
 metadata:
   name: linus-vpc
@@ -13,7 +13,7 @@ spec:
       z2Cidr: "10.0.0.16/28"
       z3Cidr: "10.0.0.32/28"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: EksCluster
 metadata:
   name: linus-cluster
@@ -41,7 +41,7 @@ spec:
     karpenterHelm:
       version: "1.3.0"
 # ---
-# apiVersion: consumable.trustbank.sg/v1alpha1
+# apiVersion: consumable.minisrc.com/v1alpha1
 # kind: EksComponents
 # metadata:
 #   name: linus-components

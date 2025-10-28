@@ -1,7 +1,7 @@
 # EKS as Comsumables
 
 ## Introduction
-EKS as Consumables (EKSaC) is designed to address various challenges that the Platform team is facing with EKS infrastructure in Trust Bank.
+EKS as Consumables (EKSaC) is designed to address various challenges that the Platform team is facing with EKS infrastructure in the organisation.
 
 ## Preliminaries
 EKSaC is built with different tools to achieve the capabilities.  To understand EKSaC, it is necessry to understand the concept of some of the tools used.
@@ -42,7 +42,7 @@ EKSaC is built with different tools to achieve the capabilities.  To understand 
       name: x-network-kcl
     spec:
       compositeTypeRef:
-        apiVersion: consumable.trustbank.sg/v1alpha1
+        apiVersion: consumable.minisrc.com/v1alpha1
         kind: xNetworkKcl
       mode: Pipeline
       pipeline:
@@ -108,9 +108,9 @@ EKSaC is built with different tools to achieve the capabilities.  To understand 
     apiVersion: apiextensions.crossplane.io/v1
     kind: CompositeResourceDefinition
     metadata:
-      name: xnetworkskcl.consumable.trustbank.sg
+      name: xnetworkskcl.consumable.minisrc.com
     spec:
-      group: consumable.trustbank.sg
+      group: consumable.minisrc.com
       names:
         kind: xNetworkKcl
         plural: xnetworkskcl
@@ -155,7 +155,7 @@ EKSaC is built with different tools to achieve the capabilities.  To understand 
     <summary>XR manifest example</summary>
 
     ```yaml
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: NetworkKcl
     metadata:
       name: linus-network
@@ -220,7 +220,7 @@ EKSaC is built with different tools to achieve the capabilities.  To understand 
     <summary>xEksClusterKcl manifest</summary>
 
     ```yaml
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: EksClusterKcl
     metadata:
       name: linus-cluster

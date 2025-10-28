@@ -1,4 +1,4 @@
-# xEksComponent (xekscomponents.comsumable.trustbank.sg)
+# xEksComponent (xekscomponents.comsumable.minisrc.com)
 
 ## List of Components in this Cluster
 1.  [metrics-server](https://github.com/kubernetes-sigs/metrics-server)

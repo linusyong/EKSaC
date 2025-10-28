@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: Vpc
 metadata:
   name: test01

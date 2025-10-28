@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xbuckets.consumable.trustbank.sg
+  name: xbuckets.consumable.minisrc.com
 spec:
-  group: consumable.trustbank.sg
+  group: consumable.minisrc.com
   names:
     kind: XBucket
     plural: xbuckets

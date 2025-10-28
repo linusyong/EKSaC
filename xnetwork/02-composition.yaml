@@ -4,7 +4,7 @@ metadata:
   name: x-network
 spec:
   compositeTypeRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xNetwork
   patchSets:
   - name: region-patchset

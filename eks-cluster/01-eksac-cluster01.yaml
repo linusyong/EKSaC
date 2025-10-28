@@ -1,4 +1,4 @@
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xEksCluster
 metadata:
   name: eksac-cluster01
@@ -25,7 +25,7 @@ spec:
     karpenterHelm:
       version: "1.0.1"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: EksCluster
 metadata:
   name: eksac-cluster01
@@ -33,6 +33,6 @@ metadata:
 spec:
   name: eksac-cluster01
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xEksCluster
     name: eksac-cluster01

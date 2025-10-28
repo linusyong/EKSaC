@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xekscomponents.consumable.trustbank.sg
+  name: xekscomponents.consumable.minisrc.com
 spec:
-  group: consumable.trustbank.sg
+  group: consumable.minisrc.com
   names:
     kind: xEksComponents
     plural: xekscomponents

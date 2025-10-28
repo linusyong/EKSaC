@@ -1,4 +1,4 @@
-# xEksCluster (xeksclusters.comsumable.trustbank.sg)
+# xEksCluster (xeksclusters.comsumable.minisrc.com)
 
 ## Anatomy of xCluster
 This is the EKSaC EKS cluster component which include:
@@ -37,7 +37,7 @@ This is the EKSaC EKS cluster component which include:
 
 ## Example of xCluster (XR)
 ```yaml
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: xEksCluster
 metadata:
   name: eksac-cluster01
@@ -65,14 +65,14 @@ spec:
     karpenterHelm:
       version: "0.37.0"
 ---
-apiVersion: consumable.trustbank.sg/v1alpha1
+apiVersion: consumable.minisrc.com/v1alpha1
 kind: EksCluster
 metadata:
   name: eksac-cluster01
 spec:
   name: eksac-cluster01
   resourceRef:
-    apiVersion: consumable.trustbank.sg/v1alpha1
+    apiVersion: consumable.minisrc.com/v1alpha1
     kind: xEksCluster
     name: eksac-cluster01
 ```

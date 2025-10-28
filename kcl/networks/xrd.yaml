@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xvpcs.xnetwork.consumable.trustbank.sg
+  name: xvpcs.xnetwork.consumable.minisrc.com
 spec:
-  group: xnetwork.consumable.trustbank.sg
+  group: xnetwork.consumable.minisrc.com
   versions:
   - name: v1alpha1
     served: true

@@ -1,4 +1,4 @@
-apiVersion: xnetwork.consumable.trustbank.sg
+apiVersion: xnetwork.consumable.minisrc.com
 kind: VPCClaim
 metadata:
   name: dev-vpc

@@ -55,7 +55,7 @@
         <mxCell id="6M902_jpfInS-hgZE8w2-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startFill=0;curved=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="6M902_jpfInS-hgZE8w2-14" target="6M902_jpfInS-hgZE8w2-4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <UserObject label="apiVersion: consumable.trustbank.sg/v1alpha1&#xa;kind: EksClusterKcl&#xa;metadata:&#xa;  name: linus-cluster&#xa;  namespace: eksac&#xa;spec:&#xa;  name: linus-cluster&#xa;  location: &quot;ap-southeast-1&quot;&#xa;  awsAccountId: &quot;390945758345&quot;&#xa;  vpcRef: linus-network&#xa;  subnets:&#xa;    private:&#xa;      1a: &quot;10.0.0.128/25&quot;&#xa;      1b: &quot;10.0.1.0/25&quot;&#xa;      1c: &quot;10.0.1.128/25&quot;&#xa;  components:&#xa;    # Removed for brevity" id="6M902_jpfInS-hgZE8w2-18">
+        <UserObject label="apiVersion: consumable.minisrc.com/v1alpha1&#xa;kind: EksClusterKcl&#xa;metadata:&#xa;  name: linus-cluster&#xa;  namespace: eksac&#xa;spec:&#xa;  name: linus-cluster&#xa;  location: &quot;ap-southeast-1&quot;&#xa;  awsAccountId: &quot;390945758345&quot;&#xa;  vpcRef: linus-network&#xa;  subnets:&#xa;    private:&#xa;      1a: &quot;10.0.0.128/25&quot;&#xa;      1b: &quot;10.0.1.0/25&quot;&#xa;      1c: &quot;10.0.1.128/25&quot;&#xa;  components:&#xa;    # Removed for brevity" id="6M902_jpfInS-hgZE8w2-18">
           <mxCell style="text;whiteSpace=wrap;fontFamily=Courier New;" parent="1" vertex="1">
             <mxGeometry x="480" y="220" width="240" height="270" as="geometry" />
           </mxCell>
